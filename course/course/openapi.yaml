@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: 校园选课系统（单体版）API
+  description: |
+    校园选课与教学资源管理平台——课程管理模块  
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@zjgsu.edu.cn
+
+servers:
+  - url: http://localhost:8080
+    description: 开发环境
+
+tags:
+  - name: Course
+    description: 课程管理相关接口
+
+paths:
+  /api/courses:
+    get:
+      tags:
+        - Course
+      summary: 查询所有课程
+      description: 返回系统中所有课程列表
+      operationId: getAllCourses
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseListResp'
+              example:
+                code: 200
+                message: "Success"
+                data: []
+
+    post:
+      tags:
+        - Course
+      summary: 创建课程
+      description: 新增一门课程
+      operationId: createCourse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseInput'
+            example:
+              code: "CS202"
+              title: "数据结构"
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResp'
+
+  /api/courses/{id}:
+    get:
+      tags:
+        - Course
+      summary: 查询单个课程
+      description: 根据ID返回课程详情
+      operationId: getCourseById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResp'
+        '404':
+          description: 课程不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResp'
+
+    put:
+      tags:
+        - Course
+      summary: 更新课程
+      description: 根据ID更新课程信息
+      operationId: updateCourse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseInput'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResp'
+        '404':
+          description: 课程不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResp'
+
+    delete:
+      tags:
+        - Course
+      summary: 删除课程
+      description: 根据ID删除课程
+      operationId: deleteCourse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResp'
+        '404':
+          description: 课程不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResp'
+
+components:
+  schemas:
+    # ====== 统一响应基座 ======
+    BaseResp:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+          nullable: true
+
+    CourseInput:
+      type: object
+      required:
+        - code
+        - title
+      properties:
+        code:
+          type: string
+          description: 课程编号
+        title:
+          type: string
+          description: 课程名称
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 系统生成的课程主键
+        code:
+          type: string
+        title:
+          type: string
+
+    CourseResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Course'
+
+    CourseListResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Course'
+
+    SuccessResp:
+      $ref: '#/components/schemas/BaseResp'
+
+    ErrorResp:
+      $ref: '#/components/schemas/BaseResp'
