@@ -12,34 +12,41 @@ public class CourseService {
 
     public CourseService(CourseRepository repo) { this.repo = repo; }
 
-    public List<Course> getAll() {
-        return repo.findAll();
-    }
+    public List<Course> getAll() { return repo.findAll(); }
 
-    public Course getById(String id) {
-        return repo.findById(id)
+    public Course getByCode(String code) {
+        return repo.findByCode(code)
                    .orElseThrow(() -> new IllegalArgumentException("课程不存在"));
     }
 
-    public Course update(String id, Course newCourse) {
-        Course old = getById(id);          // 不存在会抛异常
+    public Course create(Course course) {
+        if (course.getCode() == null || course.getTitle() == null)
+            throw new IllegalArgumentException("code / title 不能为空");
+        if (course.getInstructor() == null || course.getInstructor().getName() == null)
+            throw new IllegalArgumentException("授课教师信息不完整");
+        if (course.getSchedule() == null)
+            throw new IllegalArgumentException("课程时间信息不完整");
+        if (course.getCapacity() == null || course.getCapacity() <= 0)
+            throw new IllegalArgumentException("课容量必须 > 0");
+        return repo.save(course);
+    }
+
+    public Course update(String code, Course newCourse) {
+        Course old = getByCode(code);
         if (newCourse.getCode() != null) old.setCode(newCourse.getCode());
         if (newCourse.getTitle() != null) old.setTitle(newCourse.getTitle());
+        if (newCourse.getInstructor() != null) old.setInstructor(newCourse.getInstructor());
+        if (newCourse.getSchedule() != null) {
+            old.setSchedule(newCourse.getSchedule());
+        }
+        if (newCourse.getCapacity() != null) {
+            old.setCapacity(newCourse.getCapacity());
+        }
         return repo.save(old);
     }
 
     public void delete(String id) {
         if (!repo.existsById(id)) throw new IllegalArgumentException("课程不存在");
-        repo.deleteById(id);
-    }
-
-    public Course create(Course course) {
-        if (course.getId() == null || course.getId().isBlank()) {
-            throw new IllegalArgumentException("id 不能为空");
-        }
-        if (repo.existsById(course.getId())) {
-            throw new IllegalArgumentException("课程 id 已存在");
-        }
-        return repo.save(course);
+        repo.deleteByCode(id);
     }
 }

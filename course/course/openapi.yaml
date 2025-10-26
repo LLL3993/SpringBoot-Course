@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 校园选课系统（单体版）API
   description: |
-    校园选课与教学资源管理平台——课程管理模块  
+    校园选课与教学资源管理平台
   version: 1.0.0
   contact:
     name: API Support
@@ -15,6 +15,10 @@ servers:
 tags:
   - name: Course
     description: 课程管理相关接口
+  - name: Student
+    description: 学生管理相关接口
+  - name: Enrollment
+    description: 选课管理相关接口
 
 paths:
   /api/courses:
@@ -22,7 +26,6 @@ paths:
       tags:
         - Course
       summary: 查询所有课程
-      description: 返回系统中所有课程列表
       operationId: getAllCourses
       responses:
         '200':
@@ -31,16 +34,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CourseListResp'
-              example:
-                code: 200
-                message: "Success"
-                data: []
 
     post:
       tags:
         - Course
       summary: 创建课程
-      description: 新增一门课程
       operationId: createCourse
       requestBody:
         required: true
@@ -51,6 +49,16 @@ paths:
             example:
               code: "CS202"
               title: "数据结构"
+              instructor:
+                id: "T001"
+                name: "张教授"
+                email: "zhang@zjgsu.edu.cn"
+              schedule:
+                dayOfWeek: "MONDAY"
+                startTime: "08:00"
+                endTime: "10:00"
+                expectedAttendance: 50
+              capacity: 60
       responses:
         '201':
           description: 创建成功
@@ -58,20 +66,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CourseResp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
-  /api/courses/{id}:
+  /api/courses/code/{code}:
     get:
       tags:
         - Course
-      summary: 查询单个课程
-      description: 根据ID返回课程详情
-      operationId: getCourseById
+      summary: 根据Code查询课程
+      operationId: getCourseByCode
       parameters:
-        - name: id
+        - name: code
           in: path
           required: true
           schema:
             type: string
+            example: "CS202"
       responses:
         '200':
           description: 成功
@@ -80,20 +90,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/CourseResp'
         '404':
-          description: 课程不存在
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResp'
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
     put:
       tags:
         - Course
-      summary: 更新课程
-      description: 根据ID更新课程信息
-      operationId: updateCourse
+      summary: 根据Code更新课程
+      operationId: updateCourseByCode
       parameters:
-        - name: id
+        - name: code
           in: path
           required: true
           schema:
@@ -111,42 +118,236 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CourseResp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: 课程不存在
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResp'
+          $ref: '#/components/responses/NotFound'
 
     delete:
       tags:
         - Course
-      summary: 删除课程
-      description: 根据ID删除课程
-      operationId: deleteCourse
+      summary: 根据Code删除课程
+      operationId: deleteCourseByCode
       parameters:
-        - name: id
+        - name: code
           in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: 删除成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResp'
+          $ref: '#/components/responses/DeleteSuccess'
         '404':
-          description: 课程不存在
+          $ref: '#/components/responses/NotFound'
+
+  # ======== Student ========
+  /api/students:
+    get:
+      tags:
+        - Student
+      summary: 查询所有学生
+      operationId: getAllStudents
+      responses:
+        '200':
+          description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResp'
+                $ref: '#/components/schemas/StudentListResp'
+
+    post:
+      tags:
+        - Student
+      summary: 创建学生
+      operationId: createStudent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentInput'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/students/{id}:
+    get:
+      tags:
+        - Student
+      summary: 根据ID查询学生
+      operationId: getStudentById
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResp'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Student
+      summary: 更新学生信息
+      operationId: updateStudent
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentInput'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Student
+      summary: 删除学生
+      operationId: deleteStudent
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ======== Enrollment ========
+  /api/enrollments:
+    get:
+      tags:
+        - Enrollment
+      summary: 查询全部选课记录
+      operationId: getAllEnrollments
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentListResp'
+
+    post:
+      tags:
+        - Enrollment
+      summary: 学生选课
+      operationId: createEnrollment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentInput'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/enrollments/course/{courseCode}:
+    get:
+      tags:
+        - Enrollment
+      summary: 按课程查询选课记录
+      operationId: getEnrollmentsByCourse
+      parameters:
+        - name: courseCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentListResp'
+
+  /api/enrollments/student/{studentId}:
+    get:
+      tags:
+        - Enrollment
+      summary: 按学生查询选课记录
+      operationId: getEnrollmentsByStudent
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentListResp'
+
+  /api/enrollments/{id}:
+    delete:
+      tags:
+        - Enrollment
+      summary: 学生退课
+      operationId: dropEnrollment
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
 components:
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: 参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResp'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResp'
+    DeleteSuccess:
+      description: 删除成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResp'
+
   schemas:
-    # ====== 统一响应基座 ======
     BaseResp:
       type: object
       properties:
@@ -155,9 +356,26 @@ components:
         message:
           type: string
         data:
-          type: object
           nullable: true
+          type: object
 
+    ErrorResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+      example:
+        code: 400
+        message: "课程不存在"
+        data: null
+
+    SuccessResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+      example:
+        code: 200
+        message: "Deleted"
+        data: null
+
+    # ---------- Course ----------
     CourseInput:
       type: object
       required:
@@ -200,8 +418,105 @@ components:
               items:
                 $ref: '#/components/schemas/Course'
 
-    SuccessResp:
-      $ref: '#/components/schemas/BaseResp'
+    # ---------- Student ----------
+    StudentInput:
+      type: object
+      required:
+        - studentId
+        - name
+        - major
+        - grade
+        - email
+      properties:
+        studentId:
+          type: string
+          description: 学号（全局唯一）
+        name:
+          type: string
+        major:
+          type: string
+        grade:
+          type: integer
+          description: 入学年份，如 2024
+        email:
+          type: string
+          format: email
 
-    ErrorResp:
-      $ref: '#/components/schemas/BaseResp'
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 系统生成的 UUID
+        studentId:
+          type: string
+        name:
+          type: string
+        major:
+          type: string
+        grade:
+          type: integer
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    StudentResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Student'
+
+    StudentListResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Student'
+
+    # ---------- Enrollment ----------
+    EnrollmentInput:
+      type: object
+      required:
+        - courseCode
+        - studentId
+      properties:
+        courseCode:
+          type: string
+        studentId:
+          type: string
+
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 选课记录 UUID
+        courseCode:
+          type: string
+        studentId:
+          type: string
+
+    EnrollmentResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Enrollment'
+
+    EnrollmentListResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResp'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Enrollment'

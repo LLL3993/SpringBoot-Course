@@ -10,24 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CourseRepository {
     private final Map<String, Course> map = new ConcurrentHashMap<>();
 
-    public List<Course> findAll() {
-        return new ArrayList<>(map.values());
+    public List<Course> findAll() { return new ArrayList<>(map.values()); }
+    public Optional<Course> findByCode(String code) {
+        return map.values().stream()
+                .filter(c -> c.getCode().equalsIgnoreCase(code))
+                .findFirst();
     }
-
-    public Optional<Course> findById(String id) {
-        return Optional.ofNullable(map.get(id));
-    }
-
-    public void deleteById(String id) {
-        map.remove(id);
-    }
-
-    public Course save(Course course) {
-        map.put(course.getId(), course);
-        return course;
-    }
-
-    public boolean existsById(String id) {
-        return map.containsKey(id);
-    }
+    public boolean existsById(String id) { return map.containsKey(id); }
+    public Course save(Course course) { map.put(course.getCode(), course); return course; }
+    public void deleteByCode(String code) { map.remove(code); }
 }

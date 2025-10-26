@@ -29,9 +29,9 @@ public class CourseController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)   // 201
+    @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> create(@Valid @RequestBody Course course) {
-        Course saved = service.create(course);   // service 里已设置 UUID
+        Course saved = service.create(course);
         Map<String, Object> resp = new HashMap<>();
         resp.put("code", 201);
         resp.put("message", "Created");
@@ -39,9 +39,9 @@ public class CourseController {
         return resp;
     }
 
-    @GetMapping("/{id}")
-    public Map<String, Object> getOne(@PathVariable String id) {
-        Course c = service.getById(id);
+    @GetMapping("/{code}")
+    public Map<String, Object> getOne(@PathVariable String code) {
+        Course c = service.getByCode(code);
         Map<String, Object> resp = new HashMap<>();
         resp.put("code", 200);
         resp.put("message", "Success");
@@ -49,10 +49,10 @@ public class CourseController {
         return resp;
     }
 
-    @PutMapping("/{id}")
-    public Map<String, Object> update(@PathVariable String id,
+    @PutMapping("/{code}")
+    public Map<String, Object> update(@PathVariable String code,
                                     @Valid @RequestBody Course course) {
-        Course updated = service.update(id, course);
+        Course updated = service.update(code, course);
         Map<String, Object> resp = new HashMap<>();
         resp.put("code", 200);
         resp.put("message", "Updated");
@@ -60,12 +60,22 @@ public class CourseController {
         return resp;
     }
 
-    @DeleteMapping("/{id}")
-    public Map<String, Object> delete(@PathVariable String id) {
-        service.delete(id);
+    @DeleteMapping("/{code}")
+    public Map<String, Object> delete(@PathVariable String code) {
+        service.delete(code); 
         Map<String, Object> resp = new HashMap<>();
         resp.put("code", 200);
         resp.put("message", "Deleted");
+        resp.put("data", null);
+        return resp;
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND) 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Map<String, Object> handleNotFound(IllegalArgumentException ex) {
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("code", 404);
+        resp.put("message", ex.getMessage());
         resp.put("data", null);
         return resp;
     }
