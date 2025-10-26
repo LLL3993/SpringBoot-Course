@@ -11,7 +11,15 @@ public class CourseRepository {
     private final Map<String, Course> map = new ConcurrentHashMap<>();
 
     public List<Course> findAll() {
-        return new ArrayList<>(map.values()); 
+        return new ArrayList<>(map.values());
+    }
+
+    public Optional<Course> findById(String id) {
+        return Optional.ofNullable(map.get(id));
+    }
+
+    public void deleteById(String id) {
+        map.remove(id);
     }
 
     public Course save(Course course) {
