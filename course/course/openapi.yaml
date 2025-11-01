@@ -266,7 +266,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /api/enrollments/{courseCode}:
+  /api/enrollments/course/{courseCode}:
     get:
       tags:
         - Enrollment
@@ -285,7 +285,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EnrollmentListResp'
 
-  /api/enrollments/{studentId}:
+  /api/enrollments/student/{studentId}:
     get:
       tags:
         - Enrollment
