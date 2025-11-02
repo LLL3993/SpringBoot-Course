@@ -1,14 +1,34 @@
 package com.zjsu.lyy.course.model;
 
 import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+
+@Entity
+@Table(name = "students")
 
 public class Student {
-    private String id; 
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    
+    @Column(nullable = false, unique = true, length = 20)
     private String studentId; 
+
+    @Column(nullable = false)
     private String name;
+
     private String major;
     private Integer grade; 
+    
+    @Column(unique = true)
     private String email;
+
     private LocalDateTime createdAt;
 
     public String getId() { return id; }
