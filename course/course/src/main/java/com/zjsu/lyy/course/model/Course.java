@@ -3,6 +3,7 @@ package com.zjsu.lyy.course.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.Id;
 
 @Entity   // 告诉 JPA 这是张表
@@ -20,6 +21,9 @@ public class Course {
     private Integer capacity;
     private Integer enrolled = 0;
     
+    @Version
+    private Integer version;
+
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
     public String getTitle() { return title; }

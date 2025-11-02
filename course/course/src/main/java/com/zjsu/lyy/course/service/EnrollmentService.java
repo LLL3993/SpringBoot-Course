@@ -5,12 +5,15 @@ import com.zjsu.lyy.course.model.Enrollment;
 import com.zjsu.lyy.course.repository.CourseRepository;
 import com.zjsu.lyy.course.repository.EnrollmentRepository;
 import com.zjsu.lyy.course.repository.StudentRepository;
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class EnrollmentService {
     private final EnrollmentRepository enrollmentRepo;
     private final CourseRepository courseRepo;
@@ -29,41 +32,55 @@ public class EnrollmentService {
     public List<Enrollment> getByStudent(String studentId) { return enrollmentRepo.findByStudentId(studentId); }
 
     public Enrollment enroll(String courseCode, String studentId) {
+        // 1. 拿到课程
         Course course = courseRepo.findByCode(courseCode)
                 .orElseThrow(() -> new IllegalArgumentException("课程不存在"));
-        if (!studentRepo.existsByStudentId(studentId))
-            throw new IllegalArgumentException("学生不存在");
-        if (enrollmentRepo.existsByCourseIdAndStudentId(courseCode, studentId))
-            throw new IllegalArgumentException("重复选课");
-        int enrolled = course.getEnrolled();
-        int capacity = course.getCapacity();
 
-        if (enrolled >= capacity) {
+        // 2. 判学生是否存在
+        if (!studentRepo.existsByStudentId(studentId)) {
+            throw new IllegalArgumentException("学生不存在");
+        }
+
+        // 3. 判重复选课
+        if (enrollmentRepo.existsByCourseIdAndStudentId(course.getCode(), studentId)) {
+            throw new IllegalArgumentException("重复选课");
+        }
+
+        // 4. 判容量
+        int enrolled = enrollmentRepo.countByCourseIdAndStatus(course.getCode(), Enrollment.Status.ACTIVE);
+        if (enrolled >= course.getCapacity()) {
             throw new IllegalArgumentException("课程容量已满");
         }
 
-        // 创建选课记录
+        // 5. 新建选课记录
         Enrollment e = new Enrollment();
-        e.setId(UUID.randomUUID().toString());
-        e.setCourseId(courseCode);
+        e.setCourseId(course.getCode());
         e.setStudentId(studentId);
+        e.setStatus(Enrollment.Status.ACTIVE);
         Enrollment saved = enrollmentRepo.save(e);
 
+        // 6. 把课程已选人数+1
         course.setEnrolled(enrolled + 1);
         courseRepo.save(course);
 
         return saved;
     }
 
-    public void drop(String id) {
-        Enrollment enrollment = enrollmentRepo.findById(id)
+    public void drop(String enrollmentId) {
+        // 1. 找到选课记录
+        Enrollment e = enrollmentRepo.findById(enrollmentId)
                 .orElseThrow(() -> new IllegalArgumentException("选课记录不存在"));
 
-        Course course = courseRepo.findByCode(enrollment.getCourseId())
+        // 2. 找到对应课程
+        Course course = courseRepo.findById(e.getCourseId())
                 .orElseThrow(() -> new IllegalArgumentException("课程不存在"));
-        course.setEnrolled(course.getEnrolled() - 1);
+
+        // 3. 人数-1
+        int now = course.getEnrolled();
+        course.setEnrolled(now - 1);
         courseRepo.save(course);
 
-        enrollmentRepo.deleteById(id);
+        // 4. 把记录标为 DROPPED（或直接删除，作业要求直接删也行）
+        enrollmentRepo.deleteById(enrollmentId);
     }
 }
