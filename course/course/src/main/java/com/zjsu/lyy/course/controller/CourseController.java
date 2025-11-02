@@ -39,7 +39,7 @@ public class CourseController {
         return resp;
     }
 
-    @GetMapping("/{code}")
+    @GetMapping("/code/{code}")
     public Map<String, Object> getOne(@PathVariable String code) {
         Course c = service.getByCode(code);
         Map<String, Object> resp = new HashMap<>();
@@ -49,7 +49,7 @@ public class CourseController {
         return resp;
     }
 
-    @PutMapping("/{code}")
+    @PutMapping("/code/{code}")
     public Map<String, Object> update(@PathVariable String code,
                                     @Valid @RequestBody Course course) {
         Course updated = service.update(code, course);
@@ -60,7 +60,7 @@ public class CourseController {
         return resp;
     }
 
-    @DeleteMapping("/{code}")
+    @DeleteMapping("/code/{code}")
     public Map<String, Object> delete(@PathVariable String code) {
         service.delete(code); 
         Map<String, Object> resp = new HashMap<>();
