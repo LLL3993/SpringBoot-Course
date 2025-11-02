@@ -1,5 +1,7 @@
 package com.zjsu.lyy.course.model;
+import jakarta.persistence.Embeddable;
 
+@Embeddable
 public class Instructor {
     private String id;
     private String name;

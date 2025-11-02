@@ -1,7 +1,19 @@
 package com.zjsu.lyy.course.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+
+@Entity   // 告诉 JPA 这是张表
+@Table(name = "courses")
+
 public class Course {
+
+    @Id
+    @Column(nullable = false, unique = true, length = 20)
     private String code;
+
     private String title;
     private Instructor instructor;
     private ScheduleSlot schedule;
