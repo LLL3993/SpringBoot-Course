@@ -3,6 +3,7 @@ package com.zjsu.lyy.course.service;
 import com.zjsu.lyy.course.model.Course;
 import com.zjsu.lyy.course.repository.CourseRepository;
 import org.springframework.stereotype.Service;
+import jakarta.transaction.Transactional;
 
 import java.util.List;
 
@@ -45,6 +46,7 @@ public class CourseService {
         return repo.save(old);
     }
 
+    @Transactional
     public void delete(String code) {
         if (!repo.existsByCode(code)) throw new IllegalArgumentException("课程不存在");
         repo.deleteByCode(code);
