@@ -25,7 +25,7 @@ public class EnrollmentService {
     }
 
     public List<Enrollment> getAll() { return enrollmentRepo.findAll(); }
-    public List<Enrollment> getByCourse(String courseCode) { return enrollmentRepo.findByCourseCode(courseCode); }
+    public List<Enrollment> getByCourse(String courseId) { return enrollmentRepo.findByCourseId(courseId); }
     public List<Enrollment> getByStudent(String studentId) { return enrollmentRepo.findByStudentId(studentId); }
 
     public Enrollment enroll(String courseCode, String studentId) {
@@ -33,7 +33,7 @@ public class EnrollmentService {
                 .orElseThrow(() -> new IllegalArgumentException("课程不存在"));
         if (!studentRepo.existsByStudentId(studentId))
             throw new IllegalArgumentException("学生不存在");
-        if (enrollmentRepo.existsByCourseAndStudent(courseCode, studentId))
+        if (enrollmentRepo.existsByCourseIdAndStudentId(courseCode, studentId))
             throw new IllegalArgumentException("重复选课");
         int enrolled = course.getEnrolled();
         int capacity = course.getCapacity();

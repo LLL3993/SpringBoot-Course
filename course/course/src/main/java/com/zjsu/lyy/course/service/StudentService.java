@@ -42,7 +42,7 @@ public class StudentService {
             if (repo.existsByStudentId(newStu.getStudentId()))
                 throw new IllegalArgumentException("新学号已存在");
             // 先删旧 key，再换新 key
-            repo.deleteByStudentId(studentId);
+            repo.deleteById(studentId);
             old.setStudentId(newStu.getStudentId());
         }
         // 其余字段正常合并
@@ -59,6 +59,6 @@ public class StudentService {
     public void delete(String studentId) {
         if (!enrollmentRepo.findByStudentId(studentId).isEmpty())
             throw new IllegalArgumentException("无法删除：该学生存在选课记录");
-        repo.deleteByStudentId(studentId);
+        repo.deleteById(studentId);
     }
 }

@@ -47,6 +47,6 @@ public class CourseService {
 
     public void delete(String id) {
         if (!repo.existsById(id)) throw new IllegalArgumentException("课程不存在");
-        repo.deleteByCode(id);
+        repo.deleteById(id);
     }
 }
