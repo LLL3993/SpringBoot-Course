@@ -29,7 +29,7 @@ public class Enrollment {
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private Status status = Status.ACTIVE;
-    public enum Status { ACTIVE, DROPPED }
+    public enum Status { ACTIVE, DROPPED, COMPLETED }
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
