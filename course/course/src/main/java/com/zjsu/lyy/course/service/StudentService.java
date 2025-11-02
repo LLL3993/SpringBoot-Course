@@ -1,8 +1,12 @@
 package com.zjsu.lyy.course.service;
 
+import com.zjsu.lyy.course.model.Enrollment;
 import com.zjsu.lyy.course.model.Student;
 import com.zjsu.lyy.course.repository.EnrollmentRepository;
 import com.zjsu.lyy.course.repository.StudentRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -56,9 +60,22 @@ public class StudentService {
         }
         return repo.save(old);
     }
+
+    @Transactional
     public void delete(String studentId) {
-        if (!enrollmentRepo.findByStudentId(studentId).isEmpty())
+        // 是否存在
+        if (!repo.existsByStudentId(studentId)) {
+            throw new IllegalArgumentException("学生不存在");
+        }
+
+        // 是否还有 ACTIVE 的选课
+        boolean hasActive = enrollmentRepo
+                .existsByStudentIdAndStatus(studentId, Enrollment.Status.ACTIVE);
+        if (hasActive) {
             throw new IllegalArgumentException("无法删除：该学生存在选课记录");
-        repo.deleteById(studentId);
+        }
+
+        // 真正删除
+        repo.deleteByStudentId(studentId);
     }
 }
