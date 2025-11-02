@@ -1,10 +1,8 @@
 spring:
-  datasource:
-    url: jdbc:mysql://10.234.126.86:3306/course_db?connectTimeout=30000
-    username: course
-    password: Pwd1234!
-    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: update   # 第一次让它自动建表
-    show-sql: true       # 在控制台打印 SQL，方便我们看
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
