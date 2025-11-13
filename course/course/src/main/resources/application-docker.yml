@@ -7,8 +7,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
-  profiles:
-    active: docker
 
 logging:
   level:
