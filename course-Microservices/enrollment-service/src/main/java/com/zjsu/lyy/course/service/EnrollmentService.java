@@ -1,85 +1,95 @@
 package com.zjsu.lyy.course.service;
 
-import com.zjsu.lyy.course.model.Course;
 import com.zjsu.lyy.course.model.Enrollment;
-import com.zjsu.lyy.course.repository.CourseRepository;
 import com.zjsu.lyy.course.repository.EnrollmentRepository;
 import com.zjsu.lyy.course.repository.StudentRepository;
 import jakarta.transaction.Transactional;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
 public class EnrollmentService {
+
     private final EnrollmentRepository enrollmentRepo;
-    private final CourseRepository courseRepo;
     private final StudentRepository studentRepo;
+    private final RestTemplate restTemplate;
+
+    @Value("${catalog-service.url:http://localhost:8081}")
+    private String catalogUrl;
 
     public EnrollmentService(EnrollmentRepository enrollmentRepo,
-                             CourseRepository courseRepo,
-                             StudentRepository studentRepo) {
+                             StudentRepository studentRepo,
+                             RestTemplate restTemplate) {
         this.enrollmentRepo = enrollmentRepo;
-        this.courseRepo = courseRepo;
         this.studentRepo = studentRepo;
+        this.restTemplate = restTemplate;
     }
 
+    /* ========== 查询 ========== */
     public List<Enrollment> getAll() { return enrollmentRepo.findAll(); }
-    public List<Enrollment> getByCourse(String courseId) { return enrollmentRepo.findByCourseId(courseId); }
+    public List<Enrollment> getByCourse(String courseCode) { return enrollmentRepo.findByCourseId(courseCode); }
     public List<Enrollment> getByStudent(String studentId) { return enrollmentRepo.findByStudentId(studentId); }
 
+    /* ========== 选课 ========== */
     public Enrollment enroll(String courseCode, String studentId) {
-        // 1. 拿到课程
-        Course course = courseRepo.findByCode(courseCode)
-                .orElseThrow(() -> new IllegalArgumentException("课程不存在"));
-
-        // 2. 判学生是否存在
+        // 1. 学生存在性
         if (!studentRepo.existsByStudentId(studentId)) {
             throw new IllegalArgumentException("学生不存在");
         }
+        // 2. 课程存在性 + 拿容量/已选（远程）
+        Map<String, Object> resp;
+        try {
+            resp = restTemplate.getForObject(
+                    catalogUrl + "/api/courses/code/" + courseCode,
+                    Map.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new IllegalArgumentException("课程不存在");
+        }
+        Map<String, Object> courseData = (Map<String, Object>) resp.get("data");
+        Integer capacity = (Integer) courseData.get("capacity");
+        Integer enrolled = (Integer) courseData.get("enrolled");
 
-        // 3. 判重复选课
-        if (enrollmentRepo.existsByCourseIdAndStudentId(course.getCode(), studentId)) {
+        // 3. 重复选课
+        if (enrollmentRepo.existsByCourseIdAndStudentId(courseCode, studentId)) {
             throw new IllegalArgumentException("重复选课");
         }
-
-        // 4. 判容量
-        int enrolled = enrollmentRepo.countByCourseIdAndStatus(course.getCode(), Enrollment.Status.ACTIVE);
-        if (enrolled >= course.getCapacity()) {
+        // 4. 容量
+        if (enrolled >= capacity) {
             throw new IllegalArgumentException("课程容量已满");
         }
-
-        // 5. 新建选课记录
+        // 5. 新建选课
         Enrollment e = new Enrollment();
-        e.setCourseId(course.getCode());
+        e.setCourseId(courseCode);
         e.setStudentId(studentId);
         e.setStatus(Enrollment.Status.ACTIVE);
         Enrollment saved = enrollmentRepo.save(e);
 
-        // 6. 把课程已选人数+1
-        course.setEnrolled(enrolled + 1);
-        courseRepo.save(course);
-
+        // 6. 远程+1（异步，失败也不管）
+        restTemplate.put(
+                catalogUrl + "/api/courses/code/" + courseCode,
+                Map.of("enrolled", enrolled + 1));
         return saved;
     }
 
+    /* ========== 退课 ========== */
     public void drop(String enrollmentId) {
-        // 1. 找到选课记录
         Enrollment e = enrollmentRepo.findById(enrollmentId)
                 .orElseThrow(() -> new IllegalArgumentException("选课记录不存在"));
-
-        // 2. 找到对应课程
-        Course course = courseRepo.findById(e.getCourseId())
-                .orElseThrow(() -> new IllegalArgumentException("课程不存在"));
-
-        // 3. 人数-1
-        int now = course.getEnrolled();
-        course.setEnrolled(now - 1);
-        courseRepo.save(course);
-
-        // 4. 把记录标为 DROPPED（或直接删除，作业要求直接删也行）
-        enrollmentRepo.deleteById(enrollmentId);
+        // 人数-1
+        Map<String, Object> resp = restTemplate.getForObject(
+                catalogUrl + "/api/courses/code/" + e.getCourseId(),
+                Map.class);
+        Map<String, Object> courseData = (Map<String, Object>) resp.get("data");
+        Integer enrolled = (Integer) courseData.get("enrolled");
+        restTemplate.put(
+                catalogUrl + "/api/courses/code/" + e.getCourseId(),
+                Map.of("enrolled", enrolled - 1));
+        enrollmentRepo.delete(e);
     }
 }
